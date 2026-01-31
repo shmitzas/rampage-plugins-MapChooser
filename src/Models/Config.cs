@@ -3,7 +3,7 @@ namespace MapChooser.Models;
 public class RtvConfig
 {
     public bool Enabled { get; set; } = true;
-    public bool EnabledInWarmup { get; set; } = true;
+    public bool EnabledInWarmup { get; set; } = false;
     public bool NominationEnabled { get; set; } = true;
     public int MinPlayers { get; set; } = 0;
     public int MinRounds { get; set; } = 0;
@@ -28,7 +28,7 @@ public class EndOfMapConfig
     public int MapsToShow { get; set; } = 6;
     public int VoteDuration { get; set; } = 30;
     public int TriggerSecondsBeforeEnd { get; set; } = 120;
-    public int TriggerRoundsBeforeEnd { get; set; } = 2;
+    public int TriggerRoundsBeforeEnd { get; set; } = 4;
 }
 
 public class MapChooserConfig

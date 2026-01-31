@@ -25,6 +25,7 @@ public sealed class MapChooser : BasePlugin {
     private EndOfMapVoteManager _eofManager = null!;
     
     private RtvCommand _rtvCmd = null!;
+    private UnRtvCommand _unRtvCmd = null!;
     private NominateCommand _nominateCmd = null!;
     private TimeleftCommand _timeleftCmd = null!;
     private NextmapCommand _nextmapCmd = null!;
@@ -58,6 +59,7 @@ public sealed class MapChooser : BasePlugin {
         _eofManager = new EndOfMapVoteManager(Core, _state, _rtvVoteManager, _mapLister, _mapCooldown, _changeMapManager, _config);
 
         _rtvCmd = new RtvCommand(Core, _state, _rtvVoteManager, _eofManager, _config);
+        _unRtvCmd = new UnRtvCommand(Core, _state, _rtvVoteManager, _eofManager, _config);
         _nominateCmd = new NominateCommand(Core, _state, _mapLister, _config);
         _timeleftCmd = new TimeleftCommand(Core, _state, _config);
         _nextmapCmd = new NextmapCommand(Core, _state);
@@ -66,6 +68,7 @@ public sealed class MapChooser : BasePlugin {
         _setNextMapCmd = new SetNextMapCommand(Core, _state, _mapLister, _changeMapManager);
 
         Core.Command.RegisterCommand("rtv", _rtvCmd.Execute);
+        Core.Command.RegisterCommand("unrtv", _unRtvCmd.Execute);
         Core.Command.RegisterCommand("nominate", _nominateCmd.Execute);
         Core.Command.RegisterCommand("timeleft", _timeleftCmd.Execute);
         Core.Command.RegisterCommand("nextmap", _nextmapCmd.Execute);
@@ -107,6 +110,7 @@ public sealed class MapChooser : BasePlugin {
         _state.NextMap = null;
         _state.RoundsPlayed = 0;
         _state.MapStartTime = 0; // Initialize to 0, will be updated on MatchStart/WarmupEnd
+        _state.RtvCooldownEndTime = null;
         
         _rtvVoteManager?.Clear();
         _nominateCmd?.Clear();

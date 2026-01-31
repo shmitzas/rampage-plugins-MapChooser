@@ -39,10 +39,13 @@ public class EndOfMapVoteManager
         _config = config;
     }
 
-    public void StartVote(int voteDuration, int mapsToShow, bool changeImmediately = false)
+    private bool _isRtvVote = false;
+
+    public void StartVote(int voteDuration, int mapsToShow, bool changeImmediately = false, bool isRtv = false)
     {
         if (_voteActive) return;
 
+        _isRtvVote = isRtv;
         _voteActive = true;
         _changeImmediately = changeImmediately;
         _state.EofVoteHappening = true;
@@ -153,10 +156,83 @@ public class EndOfMapVoteManager
         // Refresh menu for everyone to show new counts
         RefreshVoteMenu();
     }
+    
+    public void RemoveMapVote(IPlayer player)
+    {
+        if (!_voteActive) return;
+        
+        int slot = player.Slot;
+        if (_playerVotes.ContainsKey(slot))
+        {
+            string map = _playerVotes[slot];
+            _votes[map]--;
+            _playerVotes.Remove(slot);
+            
+            // Refresh menu for everyone to show new counts
+            RefreshVoteMenu();
+        }
+    }
 
+    public void CancelVote()
+    {
+        if (!_voteActive) return;
+        _voteActive = false;
+        _state.EofVoteHappening = false;
+        _isRtvVote = false;
+
+        // Close menus for players
+        foreach (var player in _core.PlayerManager.GetAllPlayers().Where(p => p.IsValid))
+        {
+            var menu = _core.MenusAPI.GetCurrentMenu(player);
+            if (menu?.Tag?.ToString() == "EofVoteMenu")
+            {
+                _core.MenusAPI.CloseMenuForPlayer(player, menu);
+            }
+        }
+        
+        _core.PlayerManager.SendChat(_core.Localizer["map_chooser.prefix"] + " " + _core.Localizer["map_chooser.rtv.vote_cancelled"]);
+        _votes.Clear();
+        _playerVotes.Clear();
+        _playersReceivedMenu.Clear();
+    }
+    
     private void EndVote()
     {
         if (!_voteActive) return;
+        
+        // Validation for RTV at the end of the voting period
+        if (_isRtvVote)
+        {
+            var allPlayers = _core.PlayerManager.GetAllPlayers().Where(p => p.IsValid && !p.IsFakeClient).ToList();
+            if (!_voteManager.HasReached(allPlayers.Count))
+            {
+                 // RTV Failed
+                 _core.PlayerManager.SendChat(_core.Localizer["map_chooser.prefix"] + " " + _core.Localizer["map_chooser.rtv.vote_cancelled"]);
+                 
+                 // Enable Cooldown
+                 _state.RtvCooldownEndTime = DateTime.Now.AddSeconds(_config.Rtv.VoteCooldownTime);
+
+                 _voteActive = false;
+                 _state.EofVoteHappening = false;
+                 _isRtvVote = false;
+                 
+                 // Close Menus
+                 foreach (var player in allPlayers)
+                 {
+                    var menu = _core.MenusAPI.GetCurrentMenu(player);
+                    if (menu?.Tag?.ToString() == "EofVoteMenu")
+                    {
+                        _core.MenusAPI.CloseMenuForPlayer(player, menu);
+                    }
+                 }
+                 
+                 _voteManager.Clear();
+                 return;
+            }
+            // If succeeded, we clear the RTV votes now as the result is confirmed
+            _voteManager.Clear();
+        }
+        
         _voteActive = false;
         _state.EofVoteHappening = false;
 

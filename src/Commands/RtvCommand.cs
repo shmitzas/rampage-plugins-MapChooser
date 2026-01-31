@@ -38,6 +38,20 @@ public class RtvCommand
             return;
         }
 
+        if (_state.RtvCooldownEndTime.HasValue)
+        {
+            var remaining = (_state.RtvCooldownEndTime.Value - DateTime.Now).TotalSeconds;
+            if (remaining > 0)
+            {
+                player.SendChat(localizer["map_chooser.prefix"] + " " + localizer["map_chooser.rtv.cooldown", (int)remaining]);
+                return;
+            }
+            else
+            {
+                _state.RtvCooldownEndTime = null;
+            }
+        }
+
         if (_voteManager.AddVote(player.Slot))
         {
             var allPlayers = _core.PlayerManager.GetAllPlayers().Where(p => p.IsValid && !p.IsFakeClient).ToList();
@@ -48,8 +62,8 @@ public class RtvCommand
 
             if (_voteManager.HasReached(totalPlayers))
             {
-                _voteManager.Clear();
-                _eofManager.StartVote(_config.Rtv.VoteDuration, _config.Rtv.MapsToShow, _config.Rtv.ChangeMapImmediately);
+                // _voteManager.Clear(); // Don't clear votes immediately to allow for retraction
+                _eofManager.StartVote(_config.Rtv.VoteDuration, _config.Rtv.MapsToShow, _config.Rtv.ChangeMapImmediately, isRtv: true);
             }
         }
         else
