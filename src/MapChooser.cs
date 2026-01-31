@@ -14,7 +14,7 @@ using SwiftlyS2.Shared.SchemaDefinitions;
 
 namespace MapChooser;
 
-[PluginMetadata(Id = "MapChooser", Version = "0.0.1-beta", Name = "Map Chooser", Author = "abnerfs, Oz-Lin (Ported by Cascade)", Description = "Port of cs2-rockthevote to SwiftlyS2")]
+[PluginMetadata(Id = "MapChooser", Version = "0.0.2-beta", Name = "Map Chooser", Author = "abnerfs, Oz-Lin (Ported by Cascade)", Description = "Port of cs2-rockthevote to SwiftlyS2")]
 public sealed class MapChooser : BasePlugin {
     private MapChooserConfig _config = new();
     private PluginState _state = new();
@@ -64,7 +64,7 @@ public sealed class MapChooser : BasePlugin {
         _timeleftCmd = new TimeleftCommand(Core, _state, _config);
         _nextmapCmd = new NextmapCommand(Core, _state);
         _votemapCmd = new VotemapCommand(Core, _state, _mapLister, _mapCooldown, _changeMapManager, _config);
-        _revoteCmd = new RevoteCommand(Core, _state, _eofManager);
+        _revoteCmd = new RevoteCommand(Core, _state, _eofManager, _config);
         _setNextMapCmd = new SetNextMapCommand(Core, _state, _mapLister, _changeMapManager);
 
         Core.Command.RegisterCommand("rtv", _rtvCmd.Execute);

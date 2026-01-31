@@ -31,6 +31,12 @@ public class RtvCommand
 
         var player = context.Sender!;
         var localizer = _core.Translation.GetPlayerLocalizer(player);
+        
+        if (!_config.AllowSpectatorsToVote && player.Controller?.TeamNum <= 1)
+        {
+            player.SendChat(localizer["map_chooser.prefix"] + " " + localizer["map_chooser.general.validation.spectator"]);
+            return;
+        }
 
         if (_state.EofVoteHappening)
         {
@@ -54,7 +60,9 @@ public class RtvCommand
 
         if (_voteManager.AddVote(player.Slot))
         {
-            var allPlayers = _core.PlayerManager.GetAllPlayers().Where(p => p.IsValid && !p.IsFakeClient).ToList();
+            var allPlayers = _core.PlayerManager.GetAllPlayers()
+                .Where(p => p.IsValid && !p.IsFakeClient && (_config.AllowSpectatorsToVote || p.Controller?.TeamNum > 1))
+                .ToList();
             int totalPlayers = allPlayers.Count;
             int needed = _voteManager.GetRequiredVotes(totalPlayers);
             

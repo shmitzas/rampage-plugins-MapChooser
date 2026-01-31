@@ -31,6 +31,7 @@
   "map_chooser.timeleft.time_over": "Time is over, this is the last round",
   "map_chooser.timeleft.remaining_rounds": "{0} round(s) remaining",
   "map_chooser.general.validation.warmup": "Command disabled during warmup.",
+  "map_chooser.general.validation.spectator": "You cannot vote while in spectator.",
   "map_chooser.revote.no_vote_active": "There is no map vote active at the moment.",
   "map_chooser.setnextmap.title": "Set Next Map:"
 }

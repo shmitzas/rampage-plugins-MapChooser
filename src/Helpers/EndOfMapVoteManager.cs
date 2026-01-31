@@ -97,6 +97,15 @@ public class EndOfMapVoteManager
             var currentMenu = _core.MenusAPI.GetCurrentMenu(player);
             bool hasEofMenuOpen = currentMenu?.Tag?.ToString() == "EofVoteMenu";
 
+            if (!_config.AllowSpectatorsToVote && player.Controller?.TeamNum <= 1)
+            {
+                if (hasEofMenuOpen)
+                {
+                    _core.MenusAPI.CloseMenuForPlayer(player, currentMenu!);
+                }
+                continue;
+            }
+
             if (_playerVotes.ContainsKey(player.Slot))
             {
                 // If they already voted, only refresh if they still have the menu open
@@ -125,6 +134,7 @@ public class EndOfMapVoteManager
     public void OpenVoteMenu(IPlayer player)
     {
         if (!_voteActive) return;
+        if (!_config.AllowSpectatorsToVote && player.Controller?.TeamNum <= 1) return;
         _playersReceivedMenu.Add(player.Slot); // Mark as received so it starts refreshing
         int timeRemaining = (int)Math.Max(0, Math.Ceiling((_voteEndTime - DateTime.Now).TotalSeconds));
         OpenVoteMenu(player, timeRemaining);
@@ -140,6 +150,7 @@ public class EndOfMapVoteManager
     private void RegisterVote(IPlayer player, string map)
     {
         if (!_voteActive) return;
+        if (!_config.AllowSpectatorsToVote && player.Controller?.TeamNum <= 1) return;
 
         int slot = player.Slot;
         if (_playerVotes.ContainsKey(slot))
@@ -203,7 +214,9 @@ public class EndOfMapVoteManager
         // Validation for RTV at the end of the voting period
         if (_isRtvVote)
         {
-            var allPlayers = _core.PlayerManager.GetAllPlayers().Where(p => p.IsValid && !p.IsFakeClient).ToList();
+            var allPlayers = _core.PlayerManager.GetAllPlayers()
+                .Where(p => p.IsValid && !p.IsFakeClient && (_config.AllowSpectatorsToVote || p.Controller?.TeamNum > 1))
+                .ToList();
             if (!_voteManager.HasReached(allPlayers.Count))
             {
                  // RTV Failed

@@ -30,8 +30,15 @@ public class NominateCommand
     {
         if (!_config.Rtv.NominationEnabled) return;
         if (!context.IsSentByPlayer) return;
-
+        
         var player = context.Sender!;
+
+        if (!_config.AllowSpectatorsToVote && player.Controller?.TeamNum <= 1)
+        {
+            var localizer = _core.Translation.GetPlayerLocalizer(player);
+            player.SendChat(localizer["map_chooser.prefix"] + " " + localizer["map_chooser.general.validation.spectator"]);
+            return;
+        }
         string? mapName = context.Args.Length > 0 ? context.Args[0] : null;
 
         if (string.IsNullOrEmpty(mapName))
@@ -52,6 +59,12 @@ public class NominateCommand
 
     private void HandleNomination(IPlayer player, string mapName)
     {
+        if (!_config.AllowSpectatorsToVote && player.Controller?.TeamNum <= 1)
+        {
+            var local = _core.Translation.GetPlayerLocalizer(player);
+            player.SendChat(local["map_chooser.prefix"] + " " + local["map_chooser.general.validation.spectator"]);
+            return;
+        }
         var localizer = _core.Translation.GetPlayerLocalizer(player);
         var currentMapName = _core.ConVar.FindAsString("mapname")?.ValueAsString;
         var map = _mapLister.Maps.FirstOrDefault(m => m.Name.Contains(mapName, StringComparison.OrdinalIgnoreCase));

@@ -36,6 +36,14 @@ public class VotemapCommand
         if (!context.IsSentByPlayer) return;
 
         var player = context.Sender!;
+        
+        if (!_config.AllowSpectatorsToVote && player.Controller?.TeamNum <= 1)
+        {
+            var localizer = _core.Translation.GetPlayerLocalizer(player);
+            player.SendChat(localizer["map_chooser.prefix"] + " " + localizer["map_chooser.general.validation.spectator"]);
+            return;
+        }
+
         string? mapName = context.Args.Length > 0 ? context.Args[0] : null;
 
         if (string.IsNullOrEmpty(mapName))
@@ -56,6 +64,12 @@ public class VotemapCommand
 
     private void HandleVotemap(IPlayer player, string mapName)
     {
+        if (!_config.AllowSpectatorsToVote && player.Controller?.TeamNum <= 1)
+        {
+            var local = _core.Translation.GetPlayerLocalizer(player);
+            player.SendChat(local["map_chooser.prefix"] + " " + local["map_chooser.general.validation.spectator"]);
+            return;
+        }
         var localizer = _core.Translation.GetPlayerLocalizer(player);
         var currentMapName = _core.ConVar.FindAsString("mapname")?.ValueAsString;
         var map = _mapLister.Maps.FirstOrDefault(m => m.Name.Contains(mapName, StringComparison.OrdinalIgnoreCase));
@@ -85,7 +99,9 @@ public class VotemapCommand
         var voteManager = _mapVotes[map.Name];
         if (voteManager.AddVote(player.Slot))
         {
-            var allPlayers = _core.PlayerManager.GetAllPlayers().Where(p => p.IsValid && !p.IsFakeClient).ToList();
+            var allPlayers = _core.PlayerManager.GetAllPlayers()
+                .Where(p => p.IsValid && !p.IsFakeClient && (_config.AllowSpectatorsToVote || p.Controller?.TeamNum > 1))
+                .ToList();
             int totalPlayers = allPlayers.Count;
             int needed = voteManager.GetRequiredVotes(totalPlayers);
             
