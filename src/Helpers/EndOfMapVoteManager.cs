@@ -77,6 +77,31 @@ public class EndOfMapVoteManager
         RefreshVoteMenu(true);
     }
 
+    public void StartCustomVote(List<string> maps, int voteDuration, bool changeImmediately = false)
+    {
+        if (_voteActive) return;
+
+        _isRtvVote = false;
+        _voteActive = true;
+        _changeImmediately = changeImmediately;
+        _state.EofVoteHappening = true;
+        _votes.Clear();
+        _playerVotes.Clear();
+        _playersReceivedMenu.Clear();
+
+        _mapsInVote = maps;
+
+        foreach (var map in _mapsInVote)
+            _votes[map] = 0;
+
+        _core.PlayerManager.SendChat(_core.Localizer["map_chooser.prefix"] + " " + _core.Localizer["map_chooser.vote.started"]);
+
+        _voteEndTime = DateTime.Now.AddSeconds(voteDuration);
+
+        RunVoteTimer();
+        RefreshVoteMenu(true);
+    }
+
     private void RunVoteTimer()
     {
         if (!_voteActive) return;
@@ -172,6 +197,12 @@ public class EndOfMapVoteManager
         string displayName = map == "map_chooser.extend_option" ? localizer["map_chooser.extend_option"] : map;
         player.SendChat(localizer["map_chooser.prefix"] + " " + localizer["map_chooser.vote.you_voted", displayName]);
         
+        var currentMenu = _core.MenusAPI.GetCurrentMenu(player);
+        if (currentMenu?.Tag?.ToString() == "EofVoteMenu")
+        {
+            _core.MenusAPI.CloseMenuForPlayer(player, currentMenu);
+        }
+
         // Refresh menu for everyone to show new counts
         RefreshVoteMenu();
     }

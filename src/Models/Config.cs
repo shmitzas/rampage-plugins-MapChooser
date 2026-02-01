@@ -53,4 +53,6 @@ public class MapChooserConfig
     public int MapsInCooldown { get; set; } = 3;
     public bool AllowSpectatorsToVote { get; set; } = false;
     public List<Map> Maps { get; set; } = new();
+    public string SetNextMapPermission { get; set; } = "admin.changemap";
+    public string MapsVotePermission { get; set; } = "admin.mapsvote";
 }

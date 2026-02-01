@@ -41,5 +41,7 @@
   "map_chooser.extend.vote_passed": "Voting ended. The current map will be [green]extended[default]. ({0} votes)",
   "map_chooser.vote.map_extended_time": "Current map extended by [green]{0}[default] minutes. ({1} extends left)",
   "map_chooser.vote.map_extended_rounds": "Current map extended by [green]{0}[default] rounds. ({1} extends left)",
-  "map_chooser.vote.map_extended_both": "Current map extended by [green]{0}[default] minutes and [green]{1}[default] rounds. ({2} extends left)"
+  "map_chooser.vote.map_extended_both": "Current map extended by [green]{0}[default] minutes and [green]{1}[default] rounds. ({2} extends left)",
+  "map_chooser.admin_vote.title": "Select Maps for Vote:",
+  "map_chooser.admin_vote.start": "START VOTE"
 }

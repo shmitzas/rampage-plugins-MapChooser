@@ -14,7 +14,7 @@ using SwiftlyS2.Shared.SchemaDefinitions;
 
 namespace MapChooser;
 
-[PluginMetadata(Id = "MapChooser", Version = "0.0.3-beta", Name = "Map Chooser", Author = "abnerfs, Oz-Lin (Ported by Cascade)", Description = "Port of cs2-rockthevote to SwiftlyS2")]
+[PluginMetadata(Id = "MapChooser", Version = "0.0.4-beta", Name = "Map Chooser", Author = "aga", Description = "Map chooser plugin for SwiftlyS2")]
 public sealed class MapChooser : BasePlugin {
     private MapChooserConfig _config = new();
     private PluginState _state = new();
@@ -35,6 +35,7 @@ public sealed class MapChooser : BasePlugin {
     private RevoteCommand _revoteCmd = null!;
     private SetNextMapCommand _setNextMapCmd = null!;
     private ExtendCommand _extendCmd = null!;
+    private AdminMapsVoteCommand _adminMapsVoteCmd = null!;
 
     public MapChooser(ISwiftlyCore core) : base(core)
     {
@@ -77,6 +78,7 @@ public sealed class MapChooser : BasePlugin {
         _revoteCmd = new RevoteCommand(Core, _state, _eofManager, _config);
         _setNextMapCmd = new SetNextMapCommand(Core, _state, _mapLister, _changeMapManager);
         _extendCmd = new ExtendCommand(Core, _state, _extVoteManager, _extendManager, _config);
+        _adminMapsVoteCmd = new AdminMapsVoteCommand(Core, _state, _mapLister, _eofManager, _config);
 
         Core.Command.RegisterCommand("rtv", _rtvCmd.Execute);
         Core.Command.RegisterCommand("unrtv", _unRtvCmd.Execute);
@@ -85,9 +87,10 @@ public sealed class MapChooser : BasePlugin {
         Core.Command.RegisterCommand("nextmap", _nextmapCmd.Execute);
         Core.Command.RegisterCommand("votemap", _votemapCmd.Execute);
         Core.Command.RegisterCommand("revote", _revoteCmd.Execute);
-        Core.Command.RegisterCommand("setnextmap", _setNextMapCmd.Execute, permission: "@css/changemap");
+        Core.Command.RegisterCommand("setnextmap", _setNextMapCmd.Execute, permission: _config.SetNextMapPermission);
         Core.Command.RegisterCommand("ext", _extendCmd.Execute);
         Core.Command.RegisterCommand("extendmap", _extendCmd.Execute);
+        Core.Command.RegisterCommand("mapsvote", _adminMapsVoteCmd.Execute, permission: _config.MapsVotePermission);
 
         Core.GameEvent.HookPost<EventRoundEnd>(OnRoundEnd);
         Core.GameEvent.HookPost<EventRoundStart>(OnRoundStart);

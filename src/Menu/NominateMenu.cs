@@ -34,6 +34,11 @@ public class NominateMenu
             {
                 _core.Scheduler.NextTick(() => {
                     onNominate(args.Player, map.Name);
+                    var currentMenu = _core.MenusAPI.GetCurrentMenu(args.Player);
+                    if (currentMenu != null)
+                    {
+                        _core.MenusAPI.CloseMenuForPlayer(args.Player, currentMenu);
+                    }
                 });
                 return ValueTask.CompletedTask;
             };
