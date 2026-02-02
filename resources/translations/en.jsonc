@@ -5,6 +5,7 @@
   "map_chooser.rtv.vote_removed": "You have removed your vote to change the map.",
   "map_chooser.rtv.vote_cancelled": "The vote to change the map has been cancelled.",
   "map_chooser.rtv.cooldown": "The vote to change the map is currently on cooldown. Please wait {0} seconds.",
+  "map_chooser.rtv.vote_failed_no_votes": "RTV vote failed because no votes were cast.",
   "map_chooser.rtv.not_voted": "You have not voted to change the map.",
   "map_chooser.vote.started": "The vote has started! Please vote for the next map.",
   "map_chooser.vote.title": "Vote for the next map:",

@@ -55,10 +55,26 @@ public class EndOfMapVoteManager
         _playerVotes.Clear();
         _playersReceivedMenu.Clear();
 
-        // Select maps for vote
         var allMaps = _mapLister.Maps.Select(m => m.Name).ToList();
+        var nominations = _state.Nominations.Values.Distinct().ToList();
         var random = new Random();
-        _mapsInVote = allMaps.OrderBy(x => random.Next()).Take(mapsToShow).ToList();
+
+        _mapsInVote = new List<string>();
+        
+        // Add nominations first
+        if (nominations.Count >= mapsToShow)
+        {
+            _mapsInVote.AddRange(nominations.OrderBy(x => random.Next()).Take(mapsToShow));
+        }
+        else
+        {
+            _mapsInVote.AddRange(nominations);
+            
+            // Fill rest with random maps
+            var remainingSlots = mapsToShow - _mapsInVote.Count;
+            var otherMaps = allMaps.Where(m => !_mapsInVote.Contains(m)).ToList();
+            _mapsInVote.AddRange(otherMaps.OrderBy(x => random.Next()).Take(remainingSlots));
+        }
 
         if (_config.EndOfMap.AllowExtend && _state.ExtendsLeft > 0 && !_isRtvVote)
         {
@@ -256,6 +272,13 @@ public class EndOfMapVoteManager
             if (_isRtvVote)
             {
                 _voteManager.Clear();
+            }
+
+            if (_isRtvVote && _playerVotes.Count == 0)
+            {
+                _core.PlayerManager.SendChat(_core.Localizer["map_chooser.prefix"] + " " + _core.Localizer["map_chooser.rtv.vote_failed_no_votes"]);
+                _state.RtvCooldownEndTime = DateTime.Now.AddSeconds(_config.Rtv.VoteCooldownTime);
+                return;
             }
 
             if (_votes.Count == 0) return;

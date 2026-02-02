@@ -16,7 +16,7 @@ public class NominateCommand
     private readonly PluginState _state;
     private readonly MapLister _mapLister;
     private readonly MapChooserConfig _config;
-    private readonly Dictionary<int, string> _nominations = new();
+
 
     public NominateCommand(ISwiftlyCore core, PluginState state, MapLister mapLister, MapChooserConfig config)
     {
@@ -80,17 +80,17 @@ public class NominateCommand
             return;
         }
 
-        _nominations[player.Slot] = map.Name;
+        _state.Nominations[player.Slot] = map.Name;
         _core.PlayerManager.SendChat(localizer["map_chooser.prefix"] + " " + _core.Localizer["map_chooser.nominate.success", player.Controller?.PlayerName ?? "Unknown", map.Name]);
     }
 
     public List<string> GetNominations()
     {
-        return _nominations.Values.Distinct().ToList();
+        return _state.Nominations.Values.Distinct().ToList();
     }
 
     public void Clear()
     {
-        _nominations.Clear();
+        _state.Nominations.Clear();
     }
 }
