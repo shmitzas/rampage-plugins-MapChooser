@@ -41,7 +41,8 @@ public class ChangeMapManager
     {
         if (string.IsNullOrEmpty(_state.NextMap)) return;
 
-        _state.MapChangeScheduled = false;
+        // _state.MapChangeScheduled = false;
+        _state.ChangeMapImmediately = true;
 
         var map = _mapLister.Maps.FirstOrDefault(m => m.Name.Equals(_state.NextMap, StringComparison.OrdinalIgnoreCase));
         if (map == null) return;

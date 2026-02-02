@@ -68,6 +68,8 @@ public sealed class MapChooser : BasePlugin {
         _state.NextEofVotePossibleRound = 0;
         _state.NextEofVotePossibleTime = 0;
         _state.RoundsPlayed = 0;
+        var warmupConVar = Core.ConVar.Find<int>("mp_warmup_period");
+        _state.WarmupRunning = warmupConVar?.Value == 1;
 
         _rtvCmd = new RtvCommand(Core, _state, _rtvVoteManager, _eofManager, _config);
         _unRtvCmd = new UnRtvCommand(Core, _state, _rtvVoteManager, _eofManager, _config);
@@ -113,12 +115,9 @@ public sealed class MapChooser : BasePlugin {
         _state.EofVoteHappening = false;
         _state.NextMap = null;
         _state.RoundsPlayed = 0;
-        if (Core.Engine != null)
-        {
-            _state.MapStartTime = Core.Engine.GlobalVars.CurrentTime;
-        }
-        else
-        {
+        try {
+            _state.MapStartTime = Core.Engine is { } e ? e.GlobalVars.CurrentTime : 0;
+        } catch {
             _state.MapStartTime = 0;
         }
         
@@ -149,14 +148,22 @@ public sealed class MapChooser : BasePlugin {
     private HookResult OnWarmupEnd(EventWarmupEnd @event)
     {
         _state.WarmupRunning = false;
-        _state.MapStartTime = Core.Engine?.GlobalVars.CurrentTime ?? 0;
+        try {
+            _state.MapStartTime = Core.Engine is { } e ? e.GlobalVars.CurrentTime : 0;
+        } catch {
+            _state.MapStartTime = 0;
+        }
         return HookResult.Continue;
     }
 
     private HookResult OnMatchStart(EventRoundAnnounceMatchStart @event)
     {
         _state.RoundsPlayed = 0;
-        _state.MapStartTime = Core.Engine?.GlobalVars.CurrentTime ?? 0;
+        try {
+            _state.MapStartTime = Core.Engine is { } e ? e.GlobalVars.CurrentTime : 0;
+        } catch {
+            _state.MapStartTime = 0;
+        }
         _state.WarmupRunning = false;
         _state.NextEofVotePossibleRound = 0;
         _state.NextEofVotePossibleTime = 0;

@@ -43,6 +43,11 @@ public class EndOfMapVoteManager
 
     private bool _isRtvVote = false;
 
+    public bool HasPlayerVoted(int playerSlot)
+    {
+        return _playerVotes.ContainsKey(playerSlot);
+    }
+
     public void StartVote(int voteDuration, int mapsToShow, bool changeImmediately = false, bool isRtv = false)
     {
         if (_voteActive) return;

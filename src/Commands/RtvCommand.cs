@@ -31,16 +31,34 @@ public class RtvCommand
 
         var player = context.Sender!;
         var localizer = _core.Translation.GetPlayerLocalizer(player);
+
+        if (_state.WarmupRunning && !_config.Rtv.EnabledInWarmup)
+        {
+            player.SendChat(localizer["map_chooser.prefix"] + " " + localizer["map_chooser.general.validation.warmup"]);
+            return;
+        }
         
         if (!_config.AllowSpectatorsToVote && player.Controller?.TeamNum <= 1)
         {
             player.SendChat(localizer["map_chooser.prefix"] + " " + localizer["map_chooser.general.validation.spectator"]);
             return;
         }
+        if (_state.MapChangeScheduled)
+        {
+            player.SendChat(localizer["map_chooser.prefix"] + " " + localizer["map_chooser.rtv.change_scheduled"]);
+            return;
+        }
 
         if (_state.EofVoteHappening)
         {
-            player.SendChat(localizer["map_chooser.prefix"] + " " + localizer["map_chooser.rtv.already_voted"]);
+            if (!_eofManager.HasPlayerVoted(player.Slot))
+            {
+                _eofManager.OpenVoteMenu(player);
+            }
+            else
+            {
+                player.SendChat(localizer["map_chooser.prefix"] + " " + localizer["map_chooser.rtv.already_voted"]);
+            }
             return;
         }
 
