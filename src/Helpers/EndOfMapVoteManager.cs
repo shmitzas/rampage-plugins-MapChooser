@@ -60,7 +60,7 @@ public class EndOfMapVoteManager
         var random = new Random();
         _mapsInVote = allMaps.OrderBy(x => random.Next()).Take(mapsToShow).ToList();
 
-        if (_config.EndOfMap.AllowExtend && _state.ExtendsLeft > 0)
+        if (_config.EndOfMap.AllowExtend && _state.ExtendsLeft > 0 && !_isRtvVote)
         {
             _mapsInVote.Add("map_chooser.extend_option");
         }
