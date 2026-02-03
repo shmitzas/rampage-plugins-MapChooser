@@ -47,7 +47,7 @@ public class ChangeMapManager
         var map = _mapLister.Maps.FirstOrDefault(m => m.Name.Equals(_state.NextMap, StringComparison.OrdinalIgnoreCase));
         if (map == null) return;
 
-        int delay = _state.IsRtv ? _config.Rtv.ChangeMapDelay : 3;
+        int delay = _state.IsRtv ? _config.Rtv.ChangeMapDelay : _config.EndOfMap.ChangeMapDelay;
         _core.PlayerManager.SendChat(_core.Localizer["map_chooser.prefix"] + " " + _core.Localizer["map_chooser.changing_map", map.Name, delay]);
         
         _core.Scheduler.DelayBySeconds(delay, () => {

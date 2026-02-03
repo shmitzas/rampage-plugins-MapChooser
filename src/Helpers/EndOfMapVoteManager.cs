@@ -28,6 +28,7 @@ public class EndOfMapVoteManager
     private bool _changeImmediately = false;
     private DateTime _voteEndTime;
     private readonly HashSet<int> _playersReceivedMenu = new();
+    private int _voteSessionId = 0;
 
     public EndOfMapVoteManager(ISwiftlyCore core, PluginState state, VoteManager voteManager, MapLister mapLister, MapCooldown mapCooldown, ChangeMapManager changeMapManager, ExtendManager extendManager, MapChooserConfig config)
     {
@@ -41,6 +42,17 @@ public class EndOfMapVoteManager
         _config = config;
     }
 
+    private bool IsMapInCooldownForVote(string mapName)
+    {
+        if (string.IsNullOrWhiteSpace(mapName)) return false;
+        if (mapName == "map_chooser.extend_option") return false;
+
+        var map = _mapLister.Maps.FirstOrDefault(m => m.Name.Equals(mapName, StringComparison.OrdinalIgnoreCase));
+        if (map != null) return _mapCooldown.IsMapInCooldown(map);
+
+        return _mapCooldown.IsMapInCooldown(mapName);
+    }
+
     private bool _isRtvVote = false;
 
     public bool HasPlayerVoted(int playerSlot)
@@ -48,9 +60,33 @@ public class EndOfMapVoteManager
         return _playerVotes.ContainsKey(playerSlot);
     }
 
+    public void ResetVote()
+    {
+        _voteSessionId++;
+        _voteActive = false;
+        _state.EofVoteHappening = false;
+        _isRtvVote = false;
+
+        foreach (var player in _core.PlayerManager.GetAllPlayers().Where(p => p.IsValid))
+        {
+            var menu = _core.MenusAPI.GetCurrentMenu(player);
+            if (menu?.Tag?.ToString() == "EofVoteMenu")
+            {
+                _core.MenusAPI.CloseMenuForPlayer(player, menu);
+            }
+        }
+
+        _votes.Clear();
+        _playerVotes.Clear();
+        _playersReceivedMenu.Clear();
+        _mapsInVote.Clear();
+    }
+
     public void StartVote(int voteDuration, int mapsToShow, bool changeImmediately = false, bool isRtv = false)
     {
         if (_voteActive) return;
+
+        _voteSessionId++;
 
         _isRtvVote = isRtv;
         _voteActive = true;
@@ -65,6 +101,16 @@ public class EndOfMapVoteManager
         var currentWorkshopId = _core.Engine.WorkshopId;
 
         var allMaps = _mapLister.Maps.ToList();
+        
+        // Find the current map's display name BEFORE filtering allMaps
+        string? currentMapDisplayName = null;
+        if (!string.IsNullOrEmpty(currentMapId) || !string.IsNullOrEmpty(currentWorkshopId))
+        {
+            currentMapDisplayName = allMaps.FirstOrDefault(m => 
+                (!string.IsNullOrEmpty(currentMapId) && string.Equals(m.Id, currentMapId, StringComparison.OrdinalIgnoreCase)) ||
+                (!string.IsNullOrEmpty(currentWorkshopId) && string.Equals(m.Id, currentWorkshopId, StringComparison.OrdinalIgnoreCase))
+            )?.Name;
+        }
         
         // Exclude current map from all maps list by comparing against Map.Id
         // For workshop maps, also check against the workshop ID
@@ -81,22 +127,15 @@ public class EndOfMapVoteManager
             }).ToList();
         }
         
-        var nominations = _state.Nominations.Values.Distinct().ToList();
+        var nominations = _state.Nominations.Values
+            .Distinct()
+            .Where(n => !IsMapInCooldownForVote(n))
+            .ToList();
         
-        // Exclude current map from nominations (nominations are stored as map names, need to check against map IDs)
-        if (!string.IsNullOrEmpty(currentMapId) || !string.IsNullOrEmpty(currentWorkshopId))
+        // Exclude current map from nominations using the display name we found earlier
+        if (!string.IsNullOrEmpty(currentMapDisplayName))
         {
-            // Find the current map's display name to filter from nominations
-            // Check both regular map ID and workshop ID
-            var currentMapDisplayName = allMaps.FirstOrDefault(m => 
-                (!string.IsNullOrEmpty(currentMapId) && string.Equals(m.Id, currentMapId, StringComparison.OrdinalIgnoreCase)) ||
-                (!string.IsNullOrEmpty(currentWorkshopId) && string.Equals(m.Id, currentWorkshopId, StringComparison.OrdinalIgnoreCase))
-            )?.Name;
-            
-            if (!string.IsNullOrEmpty(currentMapDisplayName))
-            {
-                nominations = nominations.Where(n => !n.Equals(currentMapDisplayName, StringComparison.OrdinalIgnoreCase)).ToList();
-            }
+            nominations = nominations.Where(n => !n.Equals(currentMapDisplayName, StringComparison.OrdinalIgnoreCase)).ToList();
         }
         
         var random = new Random();
@@ -118,10 +157,26 @@ public class EndOfMapVoteManager
             _mapsInVote.AddRange(candidateMaps.Select(m => m.Name).OrderBy(x => random.Next()).Take(remainingSlots));
         }
 
+        // If some nominations were removed due to cooldown, top up again.
+        // (Extend option is added separately and should not count towards mapsToShow.)
+        if (_mapsInVote.Count < mapsToShow)
+        {
+            var remainingSlots = mapsToShow - _mapsInVote.Count;
+            var candidateMaps = allMaps
+                .Where(m => !_mapsInVote.Contains(m.Name) && !_mapCooldown.IsMapInCooldown(m))
+                .Select(m => m.Name)
+                .ToList();
+
+            _mapsInVote.AddRange(candidateMaps.OrderBy(x => random.Next()).Take(remainingSlots));
+        }
+
         if (_config.EndOfMap.AllowExtend && _state.ExtendsLeft > 0 && !_isRtvVote)
         {
             _mapsInVote.Add("map_chooser.extend_option");
         }
+
+        // Safety filter (should already be handled for normal maps, but keep extend allowed)
+        _mapsInVote = _mapsInVote.Where(m => !IsMapInCooldownForVote(m)).ToList();
 
 
         foreach (var map in _mapsInVote)
@@ -132,13 +187,15 @@ public class EndOfMapVoteManager
         _voteEndTime = DateTime.Now.AddSeconds(voteDuration);
 
         // Show menu to all players and start timer
-        RunVoteTimer();
+        RunVoteTimer(_voteSessionId);
         RefreshVoteMenu(true);
     }
 
     public void StartCustomVote(List<string> maps, int voteDuration, bool changeImmediately = false)
     {
         if (_voteActive) return;
+
+        _voteSessionId++;
 
         _isRtvVote = false;
         _voteActive = true;
@@ -148,7 +205,7 @@ public class EndOfMapVoteManager
         _playerVotes.Clear();
         _playersReceivedMenu.Clear();
 
-        _mapsInVote = maps;
+        _mapsInVote = maps.Where(m => !IsMapInCooldownForVote(m)).ToList();
 
         foreach (var map in _mapsInVote)
             _votes[map] = 0;
@@ -157,25 +214,26 @@ public class EndOfMapVoteManager
 
         _voteEndTime = DateTime.Now.AddSeconds(voteDuration);
 
-        RunVoteTimer();
+        RunVoteTimer(_voteSessionId);
         RefreshVoteMenu(true);
     }
 
-    private void RunVoteTimer()
+    private void RunVoteTimer(int sessionId)
     {
         if (!_voteActive) return;
+        if (sessionId != _voteSessionId) return;
 
         int timeRemaining = (int)Math.Max(0, Math.Ceiling((_voteEndTime - DateTime.Now).TotalSeconds));
         
         if (timeRemaining <= 0)
         {
-            EndVote();
+            EndVote(sessionId);
             return;
         }
 
         RefreshVoteMenu();
 
-        _core.Scheduler.DelayBySeconds(1, RunVoteTimer);
+        _core.Scheduler.DelayBySeconds(1, () => RunVoteTimer(sessionId));
     }
 
     private void RefreshVoteMenu(bool forceOpen = false)
@@ -305,9 +363,10 @@ public class EndOfMapVoteManager
         _playersReceivedMenu.Clear();
     }
     
-    private void EndVote()
+    private void EndVote(int sessionId)
     {
         if (!_voteActive) return;
+        if (sessionId != _voteSessionId) return;
 
         try
         {

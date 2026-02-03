@@ -1,7 +1,5 @@
 using MapChooser.Models;
 using SwiftlyS2.Shared;
-using System.Text.Json;
-using Microsoft.Extensions.Logging;
 
 namespace MapChooser.Helpers;
 
@@ -10,15 +8,11 @@ public class MapCooldown
     private List<string> _mapsOnCooldown = new();
     private readonly MapChooserConfig _config;
     private readonly ISwiftlyCore _core;
-    private string? _savePath;
 
     public MapCooldown(ISwiftlyCore core, MapChooserConfig config)
     {
         _core = core;
         _config = config;
-        
-        _savePath = Path.Combine(_core.PluginDataDirectory, "map_history.json");
-        LoadHistory();
     }
 
     public void OnMapStart(string mapName, string? workshopId = null)
@@ -26,7 +20,6 @@ public class MapCooldown
         if (_config.MapsInCooldown <= 0)
         {
             _mapsOnCooldown.Clear();
-            SaveHistory();
             return;
         }
 
@@ -42,8 +35,6 @@ public class MapCooldown
         {
             _mapsOnCooldown.RemoveAt(0);
         }
-        
-        SaveHistory();
     }
 
     public bool IsMapInCooldown(string mapIdentity)
@@ -83,37 +74,6 @@ public class MapCooldown
             {
                 _mapsOnCooldown.RemoveAt(0);
             }
-            SaveHistory();
-        }
-    }
-
-    private void LoadHistory()
-    {
-        if (string.IsNullOrEmpty(_savePath) || !File.Exists(_savePath)) return;
-
-        try
-        {
-            string json = File.ReadAllText(_savePath);
-            _mapsOnCooldown = JsonSerializer.Deserialize<List<string>>(json) ?? new();
-        }
-        catch (Exception ex)
-        {
-            _core.Logger.LogError(ex, "Failed to load map history.");
-        }
-    }
-
-    private void SaveHistory()
-    {
-        if (string.IsNullOrEmpty(_savePath)) return;
-
-        try
-        {
-            string json = JsonSerializer.Serialize(_mapsOnCooldown);
-            File.WriteAllText(_savePath, json);
-        }
-        catch (Exception ex)
-        {
-            _core.Logger.LogError(ex, "Failed to save map history.");
         }
     }
 }

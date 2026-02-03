@@ -28,6 +28,7 @@ public class EndOfMapConfig
     public bool Enabled { get; set; } = true;
     public int MapsToShow { get; set; } = 6;
     public int VoteDuration { get; set; } = 30;
+    public int ChangeMapDelay { get; set; } = 5;
     public int TriggerSecondsBeforeEnd { get; set; } = 120;
     public int TriggerRoundsBeforeEnd { get; set; } = 4;
     public bool AllowExtend { get; set; } = true;
@@ -53,7 +54,7 @@ public class MapChooserConfig
     public ExtendMapConfig ExtendMap { get; set; } = new();
     public int MapsInCooldown { get; set; } = 3;
     public bool AllowSpectatorsToVote { get; set; } = false;
-    public List<Map> Maps { get; set; } = new();
     public string SetNextMapPermission { get; set; } = "admin.changemap";
     public string MapsVotePermission { get; set; } = "admin.mapsvote";
+    public List<Map> Maps { get; set; } = new();
 }

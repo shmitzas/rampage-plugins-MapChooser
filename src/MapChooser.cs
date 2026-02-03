@@ -14,7 +14,7 @@ using SwiftlyS2.Shared.SchemaDefinitions;
 
 namespace MapChooser;
 
-[PluginMetadata(Id = "MapChooser", Version = "0.0.6-beta", Name = "Map Chooser", Author = "aga", Description = "Map chooser plugin for SwiftlyS2")]
+[PluginMetadata(Id = "MapChooser", Version = "0.0.7-beta", Name = "Map Chooser", Author = "aga", Description = "Map chooser plugin for SwiftlyS2")]
 public sealed class MapChooser : BasePlugin {
     private MapChooserConfig _config = new();
     private PluginState _state = new();
@@ -111,6 +111,7 @@ public sealed class MapChooser : BasePlugin {
 
     private void OnMapLoad(IOnMapLoadEvent @event)
     {
+        _eofManager?.ResetVote();
         _state.MapChangeScheduled = false;
         _state.EofVoteHappening = false;
         _state.NextMap = null;
@@ -161,6 +162,7 @@ public sealed class MapChooser : BasePlugin {
 
     private HookResult OnMatchStart(EventRoundAnnounceMatchStart @event)
     {
+        _eofManager?.ResetVote();
         _state.RoundsPlayed = 0;
         try {
             _state.MapStartTime = Core.Engine is { } e ? e.GlobalVars.CurrentTime : 0;
