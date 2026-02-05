@@ -37,7 +37,7 @@ public class VotemapCommand
 
         var player = context.Sender!;
         
-        if (!_config.AllowSpectatorsToVote && player.Controller?.TeamNum <= 1)
+        if (!_config.AllowSpectatorsToVote && player.Controller?.TeamNum == 1)
         {
             var localizer = _core.Translation.GetPlayerLocalizer(player);
             player.SendChat(localizer["map_chooser.prefix"] + " " + localizer["map_chooser.general.validation.spectator"]);
@@ -64,7 +64,7 @@ public class VotemapCommand
 
     private void HandleVotemap(IPlayer player, string mapName)
     {
-        if (!_config.AllowSpectatorsToVote && player.Controller?.TeamNum <= 1)
+        if (!_config.AllowSpectatorsToVote && player.Controller?.TeamNum == 1)
         {
             var local = _core.Translation.GetPlayerLocalizer(player);
             player.SendChat(local["map_chooser.prefix"] + " " + local["map_chooser.general.validation.spectator"]);

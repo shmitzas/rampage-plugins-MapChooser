@@ -62,16 +62,15 @@ public class ExtendManager
             }
         }
 
+        // Always set cooldowns to prevent immediate re-triggering of the automated vote
+        _state.MapChangeScheduled = false;
+        _state.NextEofVotePossibleRound = _state.RoundsPlayed + 1;
+        if (_core.Engine?.GlobalVars != null)
+            _state.NextEofVotePossibleTime = _core.Engine.GlobalVars.CurrentTime + 60.0f; // 1 minute
+
         if (extendedTime || extendedRounds)
         {
             _state.ExtendsLeft--;
-            _state.MapChangeScheduled = false;
-            
-            // Set cooldowns to prevent immediate re-triggering of the automated vote
-            // We reduce this to 1 round/60s to be more responsive after an extension
-            _state.NextEofVotePossibleRound = _state.RoundsPlayed + 1;
-            if (_core.Engine?.GlobalVars != null)
-                _state.NextEofVotePossibleTime = _core.Engine.GlobalVars.CurrentTime + 60.0f; // 1 minute
 
             if (extendedTime && extendedRounds)
                 _core.PlayerManager.SendChat(_core.Localizer["map_chooser.prefix"] + " " + _core.Localizer["map_chooser.vote.map_extended_both", minutes, rounds, _state.ExtendsLeft]);

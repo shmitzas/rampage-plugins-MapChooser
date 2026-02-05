@@ -29,7 +29,7 @@ public class RevoteCommand
         var player = context.Sender!;
         var localizer = _core.Translation.GetPlayerLocalizer(player);
 
-        if (!_config.AllowSpectatorsToVote && player.Controller?.TeamNum <= 1)
+        if (!_config.AllowSpectatorsToVote && player.Controller?.TeamNum == 1)
         {
             player.SendChat(localizer["map_chooser.prefix"] + " " + localizer["map_chooser.general.validation.spectator"]);
             return;

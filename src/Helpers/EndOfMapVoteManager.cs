@@ -65,6 +65,7 @@ public class EndOfMapVoteManager
         _voteSessionId++;
         _voteActive = false;
         _state.EofVoteHappening = false;
+        _state.EofVoteCompleted = false;
         _isRtvVote = false;
 
         foreach (var player in _core.PlayerManager.GetAllPlayers().Where(p => p.IsValid))
@@ -246,7 +247,7 @@ public class EndOfMapVoteManager
             var currentMenu = _core.MenusAPI.GetCurrentMenu(player);
             bool hasEofMenuOpen = currentMenu?.Tag?.ToString() == "EofVoteMenu";
 
-            if (!_config.AllowSpectatorsToVote && player.Controller?.TeamNum <= 1)
+            if (!_config.AllowSpectatorsToVote && player.Controller?.TeamNum == 1)
             {
                 if (hasEofMenuOpen)
                 {
@@ -283,7 +284,7 @@ public class EndOfMapVoteManager
     public void OpenVoteMenu(IPlayer player)
     {
         if (!_voteActive) return;
-        if (!_config.AllowSpectatorsToVote && player.Controller?.TeamNum <= 1) return;
+        if (!_config.AllowSpectatorsToVote && player.Controller?.TeamNum == 1) return;
         _playersReceivedMenu.Add(player.Slot); // Mark as received so it starts refreshing
         int timeRemaining = (int)Math.Max(0, Math.Ceiling((_voteEndTime - DateTime.Now).TotalSeconds));
         OpenVoteMenu(player, timeRemaining);
@@ -299,7 +300,7 @@ public class EndOfMapVoteManager
     private void RegisterVote(IPlayer player, string map)
     {
         if (!_voteActive) return;
-        if (!_config.AllowSpectatorsToVote && player.Controller?.TeamNum <= 1) return;
+        if (!_config.AllowSpectatorsToVote && player.Controller?.TeamNum == 1) return;
 
         int slot = player.Slot;
         if (_playerVotes.ContainsKey(slot))
@@ -370,6 +371,8 @@ public class EndOfMapVoteManager
 
         try
         {
+            _state.EofVoteCompleted = true;
+
             // Clear RTV votes if this was an RTV vote
             if (_isRtvVote)
             {
@@ -397,6 +400,7 @@ public class EndOfMapVoteManager
             {
                 _core.PlayerManager.SendChat(_core.Localizer["map_chooser.prefix"] + " " + _core.Localizer["map_chooser.extend.vote_passed", _votes.GetValueOrDefault(winner, 0)]);
                 _extendManager.ExtendMap(_config.EndOfMap.ExtendTimeStep, _config.EndOfMap.ExtendRoundStep);
+                _state.EofVoteCompleted = false;
             }
             else
             {

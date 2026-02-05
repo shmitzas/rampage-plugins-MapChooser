@@ -38,7 +38,7 @@ public class RtvCommand
             return;
         }
         
-        if (!_config.AllowSpectatorsToVote && player.Controller?.TeamNum <= 1)
+        if (!_config.AllowSpectatorsToVote && player.Controller?.TeamNum == 1)
         {
             player.SendChat(localizer["map_chooser.prefix"] + " " + localizer["map_chooser.general.validation.spectator"]);
             return;

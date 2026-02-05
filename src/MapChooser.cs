@@ -14,7 +14,7 @@ using SwiftlyS2.Shared.SchemaDefinitions;
 
 namespace MapChooser;
 
-[PluginMetadata(Id = "MapChooser", Version = "0.0.7-beta", Name = "Map Chooser", Author = "aga", Description = "Map chooser plugin for SwiftlyS2")]
+[PluginMetadata(Id = "MapChooser", Version = "0.0.8-beta", Name = "Map Chooser", Author = "aga", Description = "Map chooser plugin for SwiftlyS2")]
 public sealed class MapChooser : BasePlugin {
     private MapChooserConfig _config = new();
     private PluginState _state = new();
@@ -131,6 +131,7 @@ public sealed class MapChooser : BasePlugin {
         _state.NextEofVotePossibleRound = 0;
         _state.NextEofVotePossibleTime = 0;
         _state.MatchEnded = false;
+        _state.EofVoteCompleted = false;
         
         _mapCooldown.OnMapStart(@event.MapName, Core.Engine.WorkshopId);
     }
@@ -174,6 +175,7 @@ public sealed class MapChooser : BasePlugin {
         _state.NextEofVotePossibleTime = 0;
         _state.MapChangeScheduled = false;
         _state.EofVoteHappening = false;
+        _state.EofVoteCompleted = false;
         _state.NextMap = null;
         _state.ExtendsLeft = _config.EndOfMap.ExtendLimit;
         
@@ -220,7 +222,7 @@ public sealed class MapChooser : BasePlugin {
 
     private void CheckAutomatedVote(bool force = false)
     {
-        if (!_config.EndOfMap.Enabled || _state.EofVoteHappening || _state.MapChangeScheduled || _state.WarmupRunning) return;
+        if (!_config.EndOfMap.Enabled || _state.EofVoteHappening || _state.EofVoteCompleted || _state.MapChangeScheduled || _state.WarmupRunning) return;
 
         // Sync rounds played with engine for better accuracy
         var gameRules = Core.EntitySystem.GetGameRules();
