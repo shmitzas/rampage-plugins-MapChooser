@@ -14,9 +14,10 @@ using SwiftlyS2.Shared.SchemaDefinitions;
 
 namespace MapChooser;
 
-[PluginMetadata(Id = "MapChooser", Version = "0.0.10-beta", Name = "Map Chooser", Author = "aga", Description = "Map chooser plugin for SwiftlyS2")]
+[PluginMetadata(Id = "MapChooser", Version = "0.0.11-alpha", Name = "Map Chooser", Author = "aga", Description = "Map chooser plugin for SwiftlyS2")]
 public sealed class MapChooser : BasePlugin {
     private MapChooserConfig _config = new();
+    private MapsConfig _mapsConfig = new();
     private PluginState _state = new();
     private MapLister _mapLister = new();
     private MapCooldown _mapCooldown = null!;
@@ -54,8 +55,15 @@ public sealed class MapChooser : BasePlugin {
                 builder.AddJsonFile("config.jsonc", optional: false, reloadOnChange: true);
             });
 
+        Core.Configuration
+            .InitializeJsonWithModel<MapsConfig>("maps.jsonc", "MapChooserMaps")
+            .Configure(builder => {
+                builder.AddJsonFile("maps.jsonc", optional: false, reloadOnChange: true);
+            });
+
         _config = Core.Configuration.Manager.GetSection("MapChooser").Get<MapChooserConfig>() ?? new MapChooserConfig();
-        _mapLister.UpdateMaps(_config.Maps);
+        _mapsConfig = Core.Configuration.Manager.GetSection("MapChooserMaps").Get<MapsConfig>() ?? new MapsConfig();
+        _mapLister.UpdateMaps(_mapsConfig.Maps);
         
         _mapCooldown = new MapCooldown(Core, _config);
         _changeMapManager = new ChangeMapManager(Core, _state, _mapLister, _config);
@@ -82,17 +90,16 @@ public sealed class MapChooser : BasePlugin {
         _extendCmd = new ExtendCommand(Core, _state, _extVoteManager, _extendManager, _config);
         _adminMapsVoteCmd = new AdminMapsVoteCommand(Core, _state, _mapLister, _eofManager, _config);
 
-        Core.Command.RegisterCommand("rtv", _rtvCmd.Execute);
-        Core.Command.RegisterCommand("unrtv", _unRtvCmd.Execute);
-        Core.Command.RegisterCommand("nominate", _nominateCmd.Execute);
-        Core.Command.RegisterCommand("timeleft", _timeleftCmd.Execute);
-        Core.Command.RegisterCommand("nextmap", _nextmapCmd.Execute);
-        Core.Command.RegisterCommand("votemap", _votemapCmd.Execute);
-        Core.Command.RegisterCommand("revote", _revoteCmd.Execute);
-        Core.Command.RegisterCommand("setnextmap", _setNextMapCmd.Execute, permission: _config.SetNextMapPermission);
-        Core.Command.RegisterCommand("ext", _extendCmd.Execute);
-        Core.Command.RegisterCommand("extendmap", _extendCmd.Execute);
-        Core.Command.RegisterCommand("mapsvote", _adminMapsVoteCmd.Execute, permission: _config.MapsVotePermission);
+        RegisterCommands(_config.Commands.Rtv, _rtvCmd.Execute);
+        RegisterCommands(_config.Commands.UnRtv, _unRtvCmd.Execute);
+        RegisterCommands(_config.Commands.Nominate, _nominateCmd.Execute);
+        RegisterCommands(_config.Commands.Timeleft, _timeleftCmd.Execute);
+        RegisterCommands(_config.Commands.Nextmap, _nextmapCmd.Execute);
+        RegisterCommands(_config.Commands.Votemap, _votemapCmd.Execute);
+        RegisterCommands(_config.Commands.Revote, _revoteCmd.Execute);
+        RegisterCommands(_config.Commands.SetNextMap, _setNextMapCmd.Execute, permission: _config.SetNextMapPermission);
+        RegisterCommands(_config.Commands.Extend, _extendCmd.Execute);
+        RegisterCommands(_config.Commands.MapsVote, _adminMapsVoteCmd.Execute, permission: _config.MapsVotePermission);
 
         Core.GameEvent.HookPost<EventRoundEnd>(OnRoundEnd);
         Core.GameEvent.HookPost<EventRoundStart>(OnRoundStart);
@@ -308,6 +315,21 @@ public sealed class MapChooser : BasePlugin {
             if (Core.Engine != null)
                 _state.NextEofVotePossibleTime = Core.Engine.GlobalVars.CurrentTime + _config.EndOfMap.VoteDuration + 1;
             _eofManager.StartVote(_config.EndOfMap.VoteDuration, _config.EndOfMap.MapsToShow);
+        }
+    }
+
+    private void RegisterCommands(string commandNames, ICommandService.CommandListener handler, string? permission = null)
+    {
+        var names = commandNames.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        foreach (var name in names)
+        {
+            if (!string.IsNullOrWhiteSpace(name))
+            {
+                if (permission != null)
+                    Core.Command.RegisterCommand(name, handler, permission: permission);
+                else
+                    Core.Command.RegisterCommand(name, handler);
+            }
         }
     }
 

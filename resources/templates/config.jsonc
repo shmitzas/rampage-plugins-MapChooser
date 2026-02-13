@@ -10,51 +10,48 @@
             "MapsToShow": 3,
             "VoteDuration": 30,
             "VotePercentage": 60,
-            "VoteCooldownTime": 300,
+            "VoteCooldownTime": 300
         },
         "Votemap": {
             "Enabled": true,
             "VotePercentage": 60,
             "ChangeMapImmediately": true,
-            "MinPlayers": 0,
+            "MinPlayers": 0
         },
         "EndOfMap": {
             "Enabled": true,
             "MapsToShow": 6,
             "VoteDuration": 30,
+            "ChangeMapDelay": 5,
             "TriggerSecondsBeforeEnd": 120,
             "TriggerRoundsBeforeEnd": 4,
+            "AllowExtend": true,
+            "ExtendTimeStep": 15,
+            "ExtendRoundStep": 5,
+            "ExtendLimit": 3
+        },
+        "ExtendMap": {
+            "Enabled": true,
+            "EnabledInWarmup": false,
+            "MinPlayers": 0,
+            "MinRounds": 0,
+            "VotePercentage": 60
         },
         "MapsInCooldown": 3,
-        "Maps": [
-            {
-                "Name": "Dust II",
-                "Id": "de_dust2",
-            },
-            {
-                "Name": "Mirage",
-                "Id": "de_mirage",
-            },
-            {
-                "Name": "Inferno",
-                "Id": "de_inferno",
-            },
-            {
-                "Name": "Nuke",
-                "Id": "de_nuke",
-            },
-            {
-                "Name": "Ancient",
-                "Id": "de_ancient",
-            },
-            {
-                "Name": "Anubis",
-                "Id": "de_anubis",
-            },
-            {
-                "Name": "Inferno Night",
-                "Id": "3124567099",
-            },
-        ],
-    },
+        "Commands": {
+            "Rtv": "rtv",
+            "UnRtv": "unrtv",
+            "Nominate": "nominate,nom,yd",
+            "Timeleft": "timeleft",
+            "Nextmap": "nextmap",
+            "Votemap": "votemap",
+            "Revote": "revote",
+            "SetNextMap": "setnextmap",
+            "Extend": "ext,extendmap",
+            "MapsVote": "mapsvote"
+        },
+        "AllowSpectatorsToVote": false,
+        "SetNextMapPermission": "admin.changemap",
+        "MapsVotePermission": "admin.mapsvote"
+    }
 }
