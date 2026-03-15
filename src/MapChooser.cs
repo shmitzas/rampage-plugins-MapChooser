@@ -37,6 +37,7 @@ public sealed class MapChooser : BasePlugin {
     private SetNextMapCommand _setNextMapCmd = null!;
     private ExtendCommand _extendCmd = null!;
     private AdminMapsVoteCommand _adminMapsVoteCmd = null!;
+    private AdminChangeMapCommand _adminChangeMapCmd = null!;
 
     public MapChooser(ISwiftlyCore core) : base(core)
     {
@@ -89,6 +90,7 @@ public sealed class MapChooser : BasePlugin {
         _setNextMapCmd = new SetNextMapCommand(Core, _state, _mapLister, _changeMapManager);
         _extendCmd = new ExtendCommand(Core, _state, _extVoteManager, _extendManager, _config);
         _adminMapsVoteCmd = new AdminMapsVoteCommand(Core, _state, _mapLister, _eofManager, _config);
+        _adminChangeMapCmd = new AdminChangeMapCommand(_state, _mapLister, _changeMapManager);
 
         RegisterCommands(_config.Commands.Rtv, _rtvCmd.Execute);
         RegisterCommands(_config.Commands.UnRtv, _unRtvCmd.Execute);
@@ -100,6 +102,7 @@ public sealed class MapChooser : BasePlugin {
         RegisterCommands(_config.Commands.SetNextMap, _setNextMapCmd.Execute, permission: _config.SetNextMapPermission);
         RegisterCommands(_config.Commands.Extend, _extendCmd.Execute);
         RegisterCommands(_config.Commands.MapsVote, _adminMapsVoteCmd.Execute, permission: _config.MapsVotePermission);
+        RegisterCommands(_config.Commands.ChangeMap, _adminChangeMapCmd.Execute, permission: _config.ChangeMapPermission);
 
         Core.GameEvent.HookPost<EventRoundEnd>(OnRoundEnd);
         Core.GameEvent.HookPost<EventRoundStart>(OnRoundStart);
